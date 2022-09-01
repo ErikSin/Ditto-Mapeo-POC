@@ -4,7 +4,7 @@ import React from 'react'
 import App from './App'
 
 const APP_ID = 'mapeo'
-const PATH = 'Ditto-Mapeo2'
+const PATH = 'Db/Ditto-Mapeo2'
 
 const AppContainer = () => {
   const createDittoInstance = () => {

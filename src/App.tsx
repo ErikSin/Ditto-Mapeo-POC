@@ -18,6 +18,9 @@ function createRandomLatLong():[number, number]{
 const App = () => {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editId, setEditId] = useState('')
   const [isSyncing, setIsSycing] = useState(false)
   const { ditto, documents: points } = usePendingCursorOperation({
     collection: COLLECTION,
@@ -68,6 +71,30 @@ const App = () => {
 
   const removeTask = (taskId: string) => () => removeByID({ _id: taskId })
 
+  const setPointToBeEdited = (taskId: string) => () => {
+    const pointToEdit = points.find(point => point.value._id === taskId)
+
+    if(pointToEdit != undefined)
+    {
+      setEditTitle(pointToEdit.value.title)
+      setEditDescription(pointToEdit.value.description)
+      setEditId(pointToEdit.value._id)
+    }
+    
+  }
+
+  function editPoint(e: React.FormEvent<HTMLFormElement>)
+  {
+    e.preventDefault()
+    updateByID({
+      _id:editId,
+      updateClosure:(doc:MutableDocument)=>{
+        doc.at('title').set(editTitle);
+        doc.at('description').set(editDescription)
+      }
+    }).then(()=>{setEditId('')})
+  }
+
   function switchScreen(e: React.FormEvent<HTMLButtonElement>)
   {
     e.preventDefault();
@@ -76,11 +103,31 @@ const App = () => {
 
   return (
     <div className="App">
-      { !isSyncing ? 
+      <div className="count">
+        {points.length} Observation{points.length !== 1 ? 's' : ''}
+      </div>
+      { editId !== "" ? 
         <React.Fragment>
-          <div className="count">
-            {points.length} Observation{points.length !== 1 ? 's' : ''}
-          </div>
+          <form className="new count" onSubmit={editPoint}>
+              <input
+                value={editTitle}
+                onChange={e=>setEditTitle(e.currentTarget.value)}
+                required
+              />
+              <input
+                value={editDescription}
+                onChange={e=>setEditDescription(e.currentTarget.value)}
+                required
+              />
+              <button type="submit">Edit</button>
+          </form> 
+          <button type="button" onClick={()=>setEditId("")}>
+            Close
+          </button>
+        </React.Fragment>
+        : 
+        !isSyncing ? 
+        <React.Fragment>
           <form className="new" onSubmit={addPoint}>
             <input
               placeholder="Title"
@@ -105,12 +152,15 @@ const App = () => {
                   onChange={toggleIsCompleted(point.value._id)}
                 /> */}
                 <span className={point.value.isCompleted ? 'completed' : ''}>
-                  {point.value.title}
-                  {point.value.description}
-                  {point.value.point} <code>(ID: {point.value._id})</code>
+                  {point.value.title + " "}
+                  {point.value.description+ " "}
+                  {point.value.point + " "} <code>(ID: {point.value._id})</code>
                 </span>
                 <button type="button" onClick={removeTask(point.value._id)}>
                   Remove
+                </button>
+                <button type="button" onClick={setPointToBeEdited(point.value._id)}>
+                  Edit
                 </button>
               </li>
             ))}
@@ -122,6 +172,19 @@ const App = () => {
         </React.Fragment> 
         :
         <React.Fragment>
+
+          <ul>
+            {points.map((point) => (
+              <li key={point.value._id}>
+                <span className={point.value.isCompleted ? 'completed' : ''}>
+                  {point.value.title}
+                  {point.value.description}
+                  {point.value.point} <code>(ID: {point.value._id})</code>
+                </span>
+              </li>
+            ))}
+          </ul>
+
           <button type="button" onClick={switchScreen}>
             Close Syncing
           </button>

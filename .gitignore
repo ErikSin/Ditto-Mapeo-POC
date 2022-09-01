@@ -3,6 +3,7 @@
 # Ditto data
 /ditto-tasks
 
+/Db
 
 # dependencies
 /node_modules
